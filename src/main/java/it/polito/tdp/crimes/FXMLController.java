@@ -5,6 +5,8 @@
 package it.polito.tdp.crimes;
 
 import java.net.URL;
+import java.time.DateTimeException;
+import java.time.LocalDate;
 import java.util.ResourceBundle;
 
 import it.polito.tdp.crimes.model.Model;
@@ -25,13 +27,13 @@ public class FXMLController {
     private URL location;
 
     @FXML // fx:id="boxAnno"
-    private ComboBox<?> boxAnno; // Value injected by FXMLLoader
+    private ComboBox<Integer> boxAnno; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxMese"
-    private ComboBox<?> boxMese; // Value injected by FXMLLoader
+    private ComboBox<Integer> boxMese; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxGiorno"
-    private ComboBox<?> boxGiorno; // Value injected by FXMLLoader
+    private ComboBox<Integer> boxGiorno; // Value injected by FXMLLoader
 
     @FXML // fx:id="btnCreaReteCittadina"
     private Button btnCreaReteCittadina; // Value injected by FXMLLoader
@@ -48,10 +50,46 @@ public class FXMLController {
     @FXML
     void doCreaReteCittadina(ActionEvent event) {
 
+    	Integer anno = this.boxAnno.getValue();
+    	if(anno == null) {
+    		this.txtResult.appendText("Selezionare un anno!\n");
+    		return;
+    	}
+    	this.model.creaGrafo(anno);
+    	this.txtResult.appendText(String.format("Grafo creato! %d vertici - %d archi\n", model.getVertexNumber(), model.getEdgesNumber()));
+    	this.txtResult.appendText(model.output());
     }
 
     @FXML
     void doSimula(ActionEvent event) {
+    	this.txtResult.clear();
+    	Integer giorno = this.boxGiorno.getValue();
+    	Integer mese = this.boxMese.getValue();
+    	Integer anno = this.boxAnno.getValue();
+    	
+    	if(anno%4!=0 && giorno==29 && mese==2) {
+    		this.txtResult.appendText("Errore inserimento data! Riprovare");
+    		return;
+    	}
+    	
+    	try {
+    		LocalDate data = LocalDate.of(anno, mese, giorno);
+    	}catch(DateTimeException e) {
+    		this.txtResult.appendText("Errore inserimento data! Riprovare");
+    		return;
+    	}
+    	Integer N;
+    	try{
+    		N = Integer.parseInt(this.txtN.getText());
+    	}catch(NumberFormatException n) {
+    		this.txtResult.appendText("Inserire un numero da 1 a 10");
+    		return;
+    	}
+    	if(N<1 || N>10) {
+    		this.txtResult.appendText("Inserire un numero da 1 a 10");
+    	}
+    	String result = this.model.getSimulazione(giorno, mese, anno, N);
+    	this.txtResult.appendText(result);
 
     }
 
@@ -69,5 +107,12 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	this.boxAnno.getItems().addAll(this.model.getAnni());
+    	for(int i=1; i<=12; i++) {
+    		this.boxMese.getItems().add(i);
+    	}
+    	for(int i=1; i<=31; i++) {
+    		this.boxGiorno.getItems().add(i);
+    	}
     }
 }
